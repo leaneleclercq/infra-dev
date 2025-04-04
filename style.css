@@ -1,0 +1,7 @@
+body {
+    font-family: sans-serif;
+    background-color: #eef; /* Légère différence pour voir que c'est la version GH */
+}
+h1 {
+    color: #af25d5; /* Couleur GitHub */
+}
