@@ -1,0 +1,58 @@
+# Nom du Workflow affiché dans l'onglet Actions
+name: Deploy Static Site to GitHub Pages
+
+# Déclencheur : Exécuter ce workflow à chaque push sur la branche 'main'
+on:
+  push:
+    branches: ["main"] # Ou la branche par défaut de votre repo si différente
+  # Permet de lancer ce workflow manuellement depuis l'onglet Actions
+  workflow_dispatch:
+
+# Permissions nécessaires pour le déploiement sur GitHub Pages
+permissions:
+  contents: read    # Pour pouvoir checkout le code
+  pages: write      # Pour pouvoir déployer sur GitHub Pages
+  id-token: write   # Pour l'authentification de l'action de déploiement
+
+# Configuration de la simultanéité : Annule les exécutions précédentes pour le même commit/branche
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+# Définition des jobs (tâches) à exécuter
+jobs:
+  # Job unique nommé 'deploy'
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # Définit l'URL de l'environnement une fois déployé
+    runs-on: ubuntu-latest # Utilise une machine virtuelle Ubuntu fournie par GitHub
+    steps:
+      # 1. Récupérer le code du repository
+      - name: Checkout code
+        uses: actions/checkout@v4 # Utilise une action pré-faite par GitHub
+
+      # 2. Configurer l'environnement GitHub Pages (nécessaire pour l'action de déploiement)
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # 3. Simuler une étape de "build" (ici, on crée juste un artefact)
+      # Dans un vrai projet, ici on compilerait le code, minifierait JS/CSS, etc.
+      # Pour ce site statique, on copie juste les fichiers dans un dossier (_site est un nom commun)
+      - name: Build static site
+        run: |
+          mkdir _site
+          cp index.html _site/
+          cp style.css _site/
+
+      # 4. Uploader l'artefact (le dossier _site) pour GitHub Pages
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Spécifie le dossier à uploader
+          path: './_site'
+
+      # 5. Déployer l'artefact uploadé sur GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment # Donne un ID à cette étape pour pouvoir récupérer son output (l'URL)
+        uses: actions/deploy-pages@v4 # Action qui gère le déploiement effectif
